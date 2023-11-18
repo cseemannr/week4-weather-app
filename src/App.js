@@ -1,11 +1,12 @@
 import "./App.css";
 import Weather from "./Components/Weather";
-import "bootstrap/dist/css/bootstrap.min.css";
+import Footer from "./Components/Footer";
 
 export default function App() {
   return (
     <div className="App">
       <Weather />
+      <Footer />
     </div>
   );
 }

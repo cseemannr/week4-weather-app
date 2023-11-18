@@ -47,7 +47,6 @@ a.active {
 a:hover,
 a:active {
   color: var(--bs-gray-800) !important;
-  font-weight: 800;
 }
 
 #forecast-container {
