@@ -1,57 +1,102 @@
 import React, { useState } from "react";
 import axios from "axios";
-
-import maxTemp from "../icons/maxtemp.svg";
-import minTemp from "../icons/mintemp.svg";
-import windy from "../icons/windy.svg";
-import humidity from "../icons/humidity.svg";
-import sunrise from "../icons/sunrise.svg";
-import sunset from "../icons/sunset.svg";
+import CurrentWeather from "./CurrentWeather";
+import Forecast from "./Forecast";
 
 export default function Weather() {
-  let key = "1a2b7258ebd456c01aef9175dfe8b709";
+  let key = "f3887e262c88d1158f7e2ef4998e234c";
 
-  const [city, setCity] = useState("");
-  const [weather, setWeather] = useState("");
-  const [coord, setCoord] = useState("");
-  const [forecast, setForecast] = useState("");
+  const [city, setCity] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [forecast, setForecast] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
-  function getForecast(lat, lon) {
-    let url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${key}&units=metric`;
+  const [loading, setLoading] = useState(false);
 
-    axios.get(url).then((res) => console.log(res));
+  function getForecast(res) {
+    setForecast(res.data.daily.slice(1, 7));
   }
 
   function getWeather(res) {
-    console.log(res.data);
+    setLoading(false);
+    setWeather({
+      name: res.data.name,
+      description: res.data.weather[0].description,
+      date: res.data.dt,
+      temp: Math.round(res.data.main.temp),
+      temp_max: Math.round(res.data.main.temp_max),
+      temp_min: Math.round(res.data.main.temp_min),
+      wind: res.data.wind.speed,
+      humidity: res.data.main.humidity,
+      sunrise: res.data.sys.sunrise,
+      sunset: res.data.sys.sunset,
+      icon: res.data.weather[0].icon,
+      // rain: res.data.rain,
+      // snow: res.data.snow,
+    });
 
     let lat = res.data.coord.lat;
     let lon = res.data.coord.lon;
 
-    getForecast(lat, lon);
+    callApiForecast(lat, lon);
+  }
+
+  function callApiForecast(lat, lon) {
+    let url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${key}&units=metric`;
+    axios
+      .get(url)
+      .then(getForecast)
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }
+
+  function callApiWeather(search) {
+    let url = `https://api.openweathermap.org/data/2.5/weather?q=${search}&APPID=${key}&units=metric `;
+    axios.get(url).then(getWeather).catch(handleError);
+  }
+
+  function handleError(error) {
+    setErrorMessage(
+      `Error ${error.response.data.cod}: ${error.response.data.message}. Please try again.`
+    );
+    setCity(null);
+    setWeather(null);
+    setForecast(null);
+    setLoading(false);
   }
 
   function handleSubmit(e) {
+    setLoading(true);
     e.preventDefault();
-    let url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=${key}&units=metric `;
-    axios.get(url).then(getWeather);
+    if (city) {
+      callApiWeather(city);
+    } else {
+      setErrorMessage("Please search for a city.");
+      setCity(null);
+      setWeather(null);
+      setForecast(null);
+      setLoading(false);
+    }
   }
 
   function handleChange(e) {
+    setErrorMessage(null);
     setCity(e.target.value);
   }
 
   return (
     <div>
       <div className="container my-5 container-main p-4 shadow-lg">
+        <h2>Weather App</h2>
         <form id="form-city" className="row mb-5" onSubmit={handleSubmit}>
           <div className="col-6">
             <input
               id="text-input"
               className="form-control"
               type="search"
-              placeholder="Search for city"
-              aria-label="Search for city"
+              placeholder="Search for a city"
+              aria-label="Search for a city"
               onChange={handleChange}
             />
           </div>
@@ -59,60 +104,25 @@ export default function Weather() {
             <input type="submit" value="Search" className="btn btn-secondary" />
           </div>
         </form>
-        <div className="row">
-          <h1 className="h1 text-capitalize">--</h1>
-          <p>
-            Last updated: <span id="date-time">--</span>
-          </p>
-          <p id="conditions" className="text-capitalize">
-            --
-          </p>
-          <h2 id="temperature" className="display-1 col-3">
-            0<span className="display-6 opacity-50">ºC</span>
-          </h2>
-          <img
-            id="icon"
-            className="col-3"
-            src="https://openweathermap.org/img/wn/10d@4x.png"
-            alt=""
-          />
-          <div className="col-sm-6">
-            <p>
-              <img
-                className="svg-icon"
-                src={maxTemp}
-                alt="Max temperature icon"
-              />
-              <span id="temperature-max">0</span>ºC
-            </p>
-            <p>
-              <img
-                className="svg-icon"
-                src={minTemp}
-                alt="Min temperature icon"
-              />
-              <span id="temperature-min">0</span>ºC
-            </p>
-            <p>
-              <img className="svg-icon" src={windy} alt="Wind icon" />
-              <span id="windy">00</span> m/s
-            </p>
-            <p>
-              <img className="svg-icon" src={humidity} alt="Humidity icon" />
-              <span id="humidity">00</span>%
-            </p>
-            <p id="rain"></p>
-            <p id="snow"></p>
-            <p>
-              <img className="svg-icon" src={sunrise} alt="Sunrise icon" />
-              <span id="sunrise">00:00</span>
-            </p>
-            <p>
-              <img className="svg-icon" src={sunset} alt="Sunset icon" />
-              <span id="sunset">00:00</span>
-            </p>
+
+        {errorMessage ? (
+          <div className="container error">{errorMessage}</div>
+        ) : (
+          ""
+        )}
+
+        {loading ? <p>loading</p> : ""}
+
+        {weather ? <CurrentWeather weather={weather} /> : ""}
+        {forecast ? (
+          <div className="forecast-container row text-center mt-5">
+            {forecast.map((day, index) => {
+              return <Forecast forecast={day} key={index} />;
+            })}
           </div>
-        </div>
+        ) : (
+          ""
+        )}
       </div>
     </div>
   );

@@ -11,10 +11,18 @@ h1 {
   color: var(--bs-gray-800) !important;
 }
 
+h2 {
+  margin-left: calc(var(--bs-gutter-x) * 0.5);
+}
+
 img {
   object-fit: cover;
   height: auto;
   max-width: 100%;
+}
+
+form {
+  position: relative;
 }
 
 .container {
@@ -49,16 +57,19 @@ a:active {
   color: var(--bs-gray-800) !important;
 }
 
-#forecast-container {
+.forecast-container {
   font-size: 14px;
   color: var(--bs-gray-600);
 }
-#forecast-day {
+.forecast-day {
   font-size: 16px;
 }
-#forecast-container span {
+.forecast-container span {
   margin: 4px;
 }
-#forecast-max {
+.forecast-max {
   font-weight: 600;
+}
+.error {
+  color: #ff4d00;
 }
